@@ -7,15 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsrsasign"></script>
 
-  <!-- Start of d3v-mdlsolutions Zendesk Widget script
-  <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=64e085db-b7a2-4e29-911a-1987b55892bf"> </script>
-  
-  <script>
-      zE('messenger', 'hide');
-  </script>
-  -->
-  <!-- End of d3v-mdlsolutions Zendesk Widget script -->
-  <!-- Make sure this is in your HTML BEFORE the script below -->
 
   <script>
     // -------- DEMO HELPERS --------
@@ -33,15 +24,15 @@
       return names[Math.floor(Math.random() * names.length)];
     }
 
-    // New rule: <name><first 6 digits of user_id>@zddemo.com
+    // New rule: <name><first 6 digits of user_id>@fin_demo.com
     function emailFromNameAndUserId(name, user_id) {
       const cleanName = name.trim().toLowerCase().replace(/\s+/g, '');
       const shortId = user_id.slice(0, 6);
-      return `${cleanName}${shortId}@zddemo.com`;
+      return `${cleanName}${shortId}@fin_demo.com`;
     }
 
     function createJwt({ user_id, email, name }) {
-      const secret = "1rzZt5OzoTVQUFnEg53iz3yb5av9f13mmsKLYs3JEAo"; // demo-only
+      const secret = "-Z_0iZiSlvpUdIbmHu19Auqqr82XY_DoCHT0lZ-A3nM"; // demo-only
       const header = { alg: "HS256", typ: "JWT" };
       const payload = {
         user_id,
@@ -101,10 +92,6 @@
   </script>
 
   <!-- 
-  <script
-    id="ze-snippet"
-    src="https://static.zdassets.com/ekr/snippet.js?key=64e085db-b7a2-4e29-911a-1987b55892bf">
-  </script> -->
 
   <!-- Start of LiveChat (www.livechat.com) code -->
   <script>
