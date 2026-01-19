@@ -114,6 +114,7 @@
   const conversationSummary = args.conversation_summary;
   LiveChatWidget.init();
   LiveChatWidget.call("maximize", { messageDraft: conversationSummary });
+  resolve({ result: 'value' });
 }
 </script>
 
