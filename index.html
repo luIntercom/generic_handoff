@@ -107,6 +107,16 @@
   });
 </script>
 
+<script>
+  window.betterHandover = function(args, resolve, reject) {
+  // args: { conversation_summary }
+  // Your code here
+  const conversationSummary = args.conversation_summary;
+  LiveChatWidget.init();
+  LiveChatWidget.call("maximize", { messageDraft: conversationSummary });
+}
+</script>
+
 
 
 
