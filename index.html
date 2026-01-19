@@ -63,14 +63,9 @@
         
         // zE('messenger', 'show');  // makes sure the widget + launcher are visible if you previously hid them
         // zE('messenger', 'open');  // actually opens the messaging Web Widget
-        window.conversationSummary = function(args, resolve, reject) {
-        // args: { conversation_summary }
-        const conversationSummary = args.conversation_summary;
-        
+    
         LiveChatWidget.init();
         LiveChatWidget.call("maximize", { messageDraft: conversationSummary });
-        resolve({ result: 'value' });
-        }
       }    
       };
 
