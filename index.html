@@ -59,13 +59,12 @@
         api_base: "https://api-iam.intercom.io",
         app_id: "szccqhdm",
         intercom_user_jwt: token,
-        handoff_with_javascript: () => {
-        
-        // zE('messenger', 'show');  // makes sure the widget + launcher are visible if you previously hid them
-        // zE('messenger', 'open');  // actually opens the messaging Web Widget
-    
+        handoff_with_javascript: async({ conversationId, transcript }) => {
+
+        console.log('handing off with javascript', conversationId, transcript);
+        Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: conversationSummary });
+        LiveChatWidget.call("maximize", { messageDraft: transcript });
       }    
       };
 
@@ -106,17 +105,6 @@
   LiveChatWidget.on("ready", function () {
     LiveChatWidget.call("hide");
   });
-</script>
-
-<script>
-  window.betterHandover = function(args, resolve, reject) {
-  // args: { conversation_summary }
-  // Your code here
-  const conversationSummary = args.conversation_summary;
-  LiveChatWidget.init();
-  LiveChatWidget.call("maximize", { messageDraft: conversationSummary });
-  resolve({ result: 'value' });
-}
 </script>
 
 
