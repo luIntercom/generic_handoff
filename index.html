@@ -64,9 +64,17 @@
         console.log('handing off with javascript', conversationId, transcript);
         Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: "transcript" });
+        LiveChatWidget.call("maximize", { messageDraft: transcript });
       }    
       };
+
+      window.betterHandover = function(args, resolve, reject) {
+        console.log('betterHandover entered');
+        Intercom('shutdown'); // Hide the intercom messenger    
+        LiveChatWidget.init();
+        LiveChatWidget.call("maximize", { messageDraft: transcript });
+        resolve({ result: 'value' });
+      }
 
       document.getElementById("currentName").textContent = name;
       document.getElementById("currentEmail").textContent = email;
