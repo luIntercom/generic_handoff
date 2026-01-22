@@ -6,10 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsrsasign"></script>
-  
-  <script>
-      LiveChatWidget.call("hide");
-  </script>
 
   <script>
     // -------- DEMO HELPERS --------
@@ -45,7 +41,24 @@
         iat: KJUR.jws.IntDate.get("now"),
         exp: KJUR.jws.IntDate.get("now + 1hour")
       };
-      return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
+      return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), JSON.stringify(secret));
+    }
+
+    // LiveChat helper: maximize with a draft (wait for ready if needed)
+    function openLiveChatWithDraft(draftText) {
+      if (!window.LiveChatWidget) {
+        console.warn("LiveChatWidget not available yet");
+        return;
+      }
+
+      // If ready, this works; if not ready yet, wait for ready.
+      try {
+        window.LiveChatWidget.call("maximize", { messageDraft: draftText || "" });
+      } catch (e) {
+        window.LiveChatWidget.once("ready", function () {
+          window.LiveChatWidget.call("maximize", { messageDraft: draftText || "" });
+        });
+      }
     }
 
     // Generate identity + JWT
@@ -59,22 +72,40 @@
         api_base: "https://api-iam.intercom.io",
         app_id: "szccqhdm",
         intercom_user_jwt: token,
-        handoff_with_javascript: async({ conversationId, transcript }) => {
 
-        console.log('handing off with javascript', conversationId, transcript);
-        Intercom('shutdown'); // Hide the intercom messenger    
-        LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: transcript });
-      }    
+        // Intercom handoff
+        handoff_with_javascript: async ({ conversationId, transcript }) => {
+          console.log("handing off with javascript", conversationId, transcript);
+
+          // Return success first, then do UI work
+          setTimeout(() => {
+            if (window.Intercom) window.Intercom("shutdown");
+            openLiveChatWithDraft(transcript || "");
+          }, 0);
+
+          return { result: "value" };
+        }
       };
 
-      window.betterHandover = function(args, resolve, reject) {
-        console.log('betterHandover entered');
-        Intercom('shutdown'); // Hide the intercom messenger    
-        LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: "worked" });
-        resolve({ result: 'value' });
-      }
+      // Generic handoff function structure
+      window.betterHandover = function (args, resolve, reject) {
+        try {
+          console.log("betterHandover entered", args);
+
+          // Resolve first so the caller sees completion
+          resolve({ result: "value" });
+
+          // Then do UI work
+          setTimeout(() => {
+            if (window.Intercom) window.Intercom("shutdown");
+            openLiveChatWithDraft("worked");
+          }, 0);
+
+        } catch (err) {
+          console.error("betterHandover error:", err);
+          reject(err);
+        }
+      };
 
       document.getElementById("currentName").textContent = name;
       document.getElementById("currentEmail").textContent = email;
@@ -102,25 +133,40 @@
     }
   </script>
 
-<!-- Start of LiveChat (www.livechat.com) code -->
-<script>
+  <!-- Start of LiveChat (www.livechat.com) code -->
+  <script>
     window.__lc = window.__lc || {};
     window.__lc.license = 19459511;
     window.__lc.integration_name = "manual_onboarding";
     window.__lc.product_name = "livechat";
-    ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
 
-  LiveChatWidget.on("ready", function () {
-    LiveChatWidget.call("hide");
-  });
-</script>
+    ;(function(n,t,c){
+      function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}
+      var e={
+        _q:[],_h:null,_v:"2.0",
+        on:function(){i(["on",c.call(arguments)])},
+        once:function(){i(["once",c.call(arguments)])},
+        off:function(){i(["off",c.call(arguments)])},
+        get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},
+        call:function(){i(["call",c.call(arguments)])},
+        init:function(){
+          var n=t.createElement("script");
+          n.async=!0;
+          n.type="text/javascript";
+          n.src="https://cdn.livechatinc.com/tracking.js";
+          t.head.appendChild(n)
+        }
+      };
+      !n.__lc.asyncInit && e.init();
+      n.LiveChatWidget = n.LiveChatWidget || e
+    }(window,document,[].slice))
 
-
-
-
-<!-- End of LiveChat code -->
-
-
+    // Hide LiveChat once it is ready (no early calls in <head>)
+    LiveChatWidget.on("ready", function () {
+      LiveChatWidget.call("hide");
+    });
+  </script>
+  <!-- End of LiveChat code -->
 </head>
 
 <body class="relative flex flex-col items-center justify-center min-h-screen overflow-hidden text-center text-white">
@@ -141,47 +187,4 @@
 
   <div class="flex flex-col items-center space-y-4 bg-black/50 px-8 py-6 rounded-xl shadow-lg backdrop-blur-sm">
     <img src="https://static.intercomassets.com/assets/default-avatars/fin/128-6a5eabbb84cc2b038b2afc6698ca0a974faf7adc9ea9f0fb3c3e78ac12543bc5.png"
-         height="60" width="60" alt="Fin Avatar" class="mx-auto">
-
-    <div class="space-y-1 text-sm opacity-90">
-      <div><span class="font-medium">User ID:</span> <span id="currentUserId"></span></div>
-      <div><span class="font-medium">Name:</span> <span id="currentName"></span></div>
-      <div><span class="font-medium">Email:</span> <span id="currentEmail"></span></div>
-    </div>
-
-    <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition"
-            onclick="newUser()">
-      Switch User
-    </button>
-  </div>
-
-  <script>
-    // Generate the initial identity & boot the first session
-    generateIdentityAndJwt();
-  </script>
-
-  <!-- Intercom widget -->
-  <script>
-    (function () {
-      var w = window; var ic = w.Intercom;
-      if (typeof ic === "function") {
-        ic('boot', w.intercomSettings);
-      } else {
-        var d = document; var i = function () { i.c(arguments); }; i.q = [];
-        i.c = function (args) { i.q.push(args); }; w.Intercom = i;
-        var l = function () {
-          var s = d.createElement('script'); s.type = 'text/javascript'; s.async = true;
-          s.src = 'https://widget.intercom.io/widget/szccqhdm';
-          var x = d.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x);
-        };
-        w.Intercom('boot', w.intercomSettings);
-
-        if (d.readyState === 'complete') { l(); }
-        else if (w.attachEvent) { w.attachEvent('onload', l); }
-        else { w.addEventListener('load', l, false); }
-      }
-    })();
-  </script>
-
-</body>
-</html>
+         height="60" width="60" alt="Fin Avat
