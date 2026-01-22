@@ -68,12 +68,35 @@
       }    
       };
 
-      window.betterHandover = {
-        console.log('betterHandover entered');
-        Intercom('shutdown'); // Hide the intercom messenger    
-        LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: "worked" });
+window.betterHandover = function (args, resolve, reject) {
+  try {
+    console.log('betterHandover entered', args);
+
+    // Tell the caller "handover succeeded" first
+    resolve({ result: 'value' });
+
+    // Then do UI changes
+    setTimeout(() => {
+      if (window.Intercom) window.Intercom('shutdown');
+
+      // LiveChat: only call if it's loaded
+      if (window.LiveChatWidget) {
+        // If you're using the LiveChat snippet you pasted earlier,
+        // calling init() here is unnecessary.
+        window.LiveChatWidget.call("maximize", { messageDraft: "worked" });
+
+        // (Alternative API style that also works for many installs)
+        // window.LiveChatWidget('call', 'maximize', { messageDraft: "worked" });
+      } else {
+        console.warn('LiveChatWidget not available yet');
       }
+    }, 0);
+  } catch (e) {
+    console.error(e);
+    reject(e);
+  }
+};
+
 
       document.getElementById("currentName").textContent = name;
       document.getElementById("currentEmail").textContent = email;
