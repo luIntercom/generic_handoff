@@ -64,7 +64,7 @@
         console.log('handing off with javascript', conversationId, transcript);
         Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: transcript });
+        LiveChatWidget.call("maximize", { messageDraft: "transcript" });
       }    
       };
 
