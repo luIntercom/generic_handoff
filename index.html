@@ -68,11 +68,12 @@
       }    
       };
 
-      window.betterHandover = {
+      window.betterHandover = function(args, resolve, reject) {
         console.log('betterHandover entered');
         Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
         LiveChatWidget.call("maximize", { messageDraft: "worked" });
+        resolve({ result: 'value' });
       }
 
       document.getElementById("currentName").textContent = name;
@@ -124,7 +125,7 @@
 
 <body class="relative flex flex-col items-center justify-center min-h-screen overflow-hidden text-center text-white">
 
-  <!-- :movie_camera: Background Video -->
+  <!-- 🎥 Background Video -->
   <video autoplay muted loop playsinline
          class="absolute top-0 left-0 w-full h-full object-cover object-top z-[-2]">
     <source src="https://videos.ctfassets.net/xny2w179f4ki/4qwcJQYYUbB2aQgIoSKu0B/18bb952c143cc39b5934bb21765cf2b4/Fin2_EnergySource_KW_v034_HybridSharpened_wParticles_WEB_10mb.mp4"
@@ -132,7 +133,7 @@
     Your browser does not support the video tag.
   </video>
 
-  <!-- :new_moon: Dark overlay to tone down brightness -->
+  <!-- 🌑 Dark overlay to tone down brightness -->
   <div class="absolute inset-0 bg-gradient-to-b from-black via-black/70 to-[#2b0045]/80 z-[-1]"></div>
 
   <!-- Main Content -->
