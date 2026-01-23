@@ -59,12 +59,17 @@
         api_base: "https://api-iam.intercom.io",
         app_id: "szccqhdm",
         intercom_user_jwt: token,
-        handoff_with_javascript: async({ conversationId, transcript, conversation_summary }) => {
-
-        console.log('handing off with javascript', conversationId, transcript, conversation_summary);
+        //handoff_with_javascript: async({ conversationId, transcript, conversation_summary }) => {
+        handoff_with_javascript: function(params) => {
+        
+        const userEmail = params.user.email;
+        const summary = params.conversation_summary;
+        //console.log('handing off with javascript', conversationId, transcript, conversation_summary);
+        console.log('handing off with javascript', userEmail, summary);
         Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: conversation_summary });
+        //LiveChatWidget.call("maximize", { messageDraft: conversation_summary });
+        LiveChatWidget.call("maximize", { messageDraft: summary });
       }    
       };
 
