@@ -66,15 +66,22 @@
         LiveChatWidget.init();
         LiveChatWidget.call("maximize", { messageDraft: conversation_summary });
       },*/
-      handoff_with_javascript: (params) => {
-        //const userEmail = params.user.email;
-        const summary = params.conversation_summary;
-        
-        console.log('handing off with javascript', summary);
-        Intercom('shutdown'); // Hide the intercom messenger    
+      handoff_with_javascript: async({ conversationId, transcript, handoffData, adminId, blocks }) => {
+        console.log('handoff', { conversationId, transcript, handoffData, adminId, blocks });
+
+        // close Fin messenger
+        Intercom('shutdown');
+
+        // init LiveChat (or whichever messenger)
         LiveChatWidget.init();
+
+        // prefer a conversation summary if we were given one by the server
+        const summary = handoffData?.conversationSummary || handoffData?.ticketDescription || transcript;
+
+        // open the other messenger with the summary prefilled
         LiveChatWidget.call("maximize", { messageDraft: summary });
-      } 
+      }
+
       };
 
 window.betterHandover = function (args, resolve, reject) {
