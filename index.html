@@ -67,10 +67,10 @@
         LiveChatWidget.call("maximize", { messageDraft: conversation_summary });
       },*/
       handoff_with_javascript: (params) => {
-        const userEmail = params.user.email;
+        //const userEmail = params.user.email;
         const summary = params.conversation_summary;
         
-        console.log('handing off with javascript', userEmail, summary);
+        console.log('handing off with javascript', summary);
         Intercom('shutdown'); // Hide the intercom messenger    
         LiveChatWidget.init();
         LiveChatWidget.call("maximize", { messageDraft: summary });
