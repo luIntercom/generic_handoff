@@ -6,10 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsrsasign"></script>
-  
-  <script>
-      LiveChatWidget.call("hide");
-  </script>
+
+  <!-- NOTE: Removed the early LiveChatWidget.call("hide") here because LiveChatWidget
+       isn't defined until after the snippet runs. We'll hide on "ready" instead. -->
 
   <script>
     // -------- DEMO HELPERS --------
@@ -48,6 +47,20 @@
       return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
     }
 
+    // ---- LiveChat identity sync helpers ----
+    function setLiveChatIdentity({ name, email, user_id }) {
+      // Calls are queued safely even if the widget isn't loaded yet.
+      if (!window.LiveChatWidget) return;
+
+      window.LiveChatWidget.call("set_customer_name", name);
+      window.LiveChatWidget.call("set_customer_email", email);
+
+      // Optional metadata visible to agents / usable in routing
+      window.LiveChatWidget.call("set_session_variables", {
+        app_user_id: user_id
+      });
+    }
+
     // Generate identity + JWT
     function generateIdentityAndJwt() {
       const name = randomName();
@@ -55,65 +68,73 @@
       const email = emailFromNameAndUserId(name, user_id);
       const token = createJwt({ user_id, email, name });
 
+      // Store current identity for reuse (e.g., LiveChat "ready" event)
+      window.currentIdentity = { name, email, user_id };
+
+      // Keep LiveChat in sync (if already loaded)
+      setLiveChatIdentity(window.currentIdentity);
+
       window.intercomSettings = {
         api_base: "https://api-iam.intercom.io",
         app_id: "szccqhdm",
         intercom_user_jwt: token,
-        /*handoff_with_javascript: async({ conversationId, transcript, conversation_summary }) => {
 
-        console.log('handing off with javascript', conversationId, transcript, conversation_summary);
-        Intercom('shutdown'); // Hide the intercom messenger    
-        LiveChatWidget.init();
-        LiveChatWidget.call("maximize", { messageDraft: conversation_summary });
-      },*/
-      handoff_with_javascript: async({ conversationId, transcript, handoffData, adminId, blocks }) => {
-        console.log('handoff', { conversationId, transcript, handoffData, adminId, blocks });
+        handoff_with_javascript: async ({ conversationId, transcript, handoffData, adminId, blocks }) => {
+          console.log('handoff', { conversationId, transcript, handoffData, adminId, blocks });
 
-        // close Fin messenger
-        Intercom('shutdown');
+          // close Fin messenger
+          Intercom('shutdown');
 
-        // init LiveChat (or whichever messenger)
-        LiveChatWidget.init();
+          // init LiveChat (if asyncInit is false, it is already loading; init() is safe regardless)
+          if (window.LiveChatWidget) {
+            window.LiveChatWidget.init();
+          }
 
-        // prefer a conversation summary if we were given one by the server
-        const summary = handoffData?.conversationSummary || handoffData?.ticketDescription || transcript;
+          // Ensure identity is set before opening
+          if (window.currentIdentity) {
+            setLiveChatIdentity(window.currentIdentity);
+          }
 
-        // open the other messenger with the summary prefilled
-        LiveChatWidget.call("maximize", { messageDraft: summary });
-      }
+          // prefer a conversation summary if we were given one by the server
+          const summary = handoffData?.conversationSummary || handoffData?.ticketDescription || transcript;
 
+          // open the other messenger with the summary prefilled
+          if (window.LiveChatWidget) {
+            window.LiveChatWidget.call("maximize", { messageDraft: summary });
+          }
+        }
       };
 
-window.betterHandover = function (args, resolve, reject) {
-  try {
-    console.log('betterHandover entered', args);
+      // Keep your custom handover function (unchanged, but identity-aware)
+      window.betterHandover = function (args, resolve, reject) {
+        try {
+          console.log('betterHandover entered', args);
 
-    // Tell the caller "handover succeeded" first
-    resolve({ result: 'value' });
+          // Tell the caller "handover succeeded" first
+          resolve({ result: 'value' });
 
-    // Then do UI changes
-    setTimeout(() => {
-      if (window.Intercom) window.Intercom('shutdown');
+          // Then do UI changes
+          setTimeout(() => {
+            if (window.Intercom) window.Intercom('shutdown');
 
-      // LiveChat: only call if it's loaded
-      if (window.LiveChatWidget) {
-        // If you're using the LiveChat snippet you pasted earlier,
-        // calling init() here is unnecessary.
-        window.LiveChatWidget.call("maximize", { messageDraft: "worked" });
+            if (window.LiveChatWidget) {
+              // Ensure identity is set before opening
+              if (window.currentIdentity) {
+                setLiveChatIdentity(window.currentIdentity);
+              }
 
-        // (Alternative API style that also works for many installs)
-        // window.LiveChatWidget('call', 'maximize', { messageDraft: "worked" });
-      } else {
-        console.warn('LiveChatWidget not available yet');
-      }
-    }, 0);
-  } catch (e) {
-    console.error(e);
-    reject(e);
-  }
-};
+              window.LiveChatWidget.call("maximize", { messageDraft: "worked" });
+            } else {
+              console.warn('LiveChatWidget not available yet');
+            }
+          }, 0);
+        } catch (e) {
+          console.error(e);
+          reject(e);
+        }
+      };
 
-
+      // Update UI
       document.getElementById("currentName").textContent = name;
       document.getElementById("currentEmail").textContent = email;
       document.getElementById("currentUserId").textContent = user_id;
@@ -137,27 +158,52 @@ window.betterHandover = function (args, resolve, reject) {
           window.intercomSettings
         );
       }
+
+      // If LiveChat is already loaded, apply identity immediately
+      if (window.currentIdentity) {
+        setLiveChatIdentity(window.currentIdentity);
+      }
     }
   </script>
 
-<!-- Start of LiveChat (www.livechat.com) code -->
-<script>
+  <!-- Start of LiveChat (www.livechat.com) code -->
+  <script>
     window.__lc = window.__lc || {};
     window.__lc.license = 19459511;
     window.__lc.integration_name = "manual_onboarding";
     window.__lc.product_name = "livechat";
-    ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
 
-  LiveChatWidget.on("ready", function () {
-    LiveChatWidget.call("hide");
-  });
-</script>
+    ;(function(n,t,c){
+      function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}
+      var e={
+        _q:[],_h:null,_v:"2.0",
+        on:function(){i(["on",c.call(arguments)])},
+        once:function(){i(["once",c.call(arguments)])},
+        off:function(){i(["off",c.call(arguments)])},
+        get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},
+        call:function(){i(["call",c.call(arguments)])},
+        init:function(){
+          var n=t.createElement("script");
+          n.async=!0;
+          n.type="text/javascript";
+          n.src="https://cdn.livechatinc.com/tracking.js";
+          t.head.appendChild(n)
+        }
+      };
+      !n.__lc.asyncInit && e.init();
+      n.LiveChatWidget=n.LiveChatWidget||e
+    }(window,document,[].slice));
 
-
-
-
-<!-- End of LiveChat code -->
-
+    // Apply identity once LiveChat is ready; keep widget hidden until you maximize on handoff
+    LiveChatWidget.on("ready", function () {
+      if (window.currentIdentity && window.LiveChatWidget) {
+        // setLiveChatIdentity expects LiveChatWidget to exist (it does now)
+        setLiveChatIdentity(window.currentIdentity);
+      }
+      LiveChatWidget.call("hide");
+    });
+  </script>
+  <!-- End of LiveChat code -->
 
 </head>
 
