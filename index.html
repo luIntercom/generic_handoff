@@ -26,11 +26,11 @@
       return names[Math.floor(Math.random() * names.length)];
     }
 
-    // New rule: <name><first 6 digits of user_id>@fin_demo.com
+    // New rule: <name><first 6 digits of user_id>@findemo.com
     function emailFromNameAndUserId(name, user_id) {
       const cleanName = name.trim().toLowerCase().replace(/\s+/g, '');
       const shortId = user_id.slice(0, 6);
-      return `${cleanName}${shortId}@fin_demo.com`;
+      return `${cleanName}${shortId}@findemo.com`;
     }
 
     function createJwt({ user_id, email, name }) {
